@@ -2,7 +2,7 @@
 
 set -e
 
-# shellcheck source=./helpers/VERSIONS.sh
+# shellcheck disable=SC1091
 . "./VERSIONS.sh"
 
 # shellcheck source=../homebrew-tools/CONFIG.sh
@@ -33,8 +33,6 @@ function generate_cask() {
     PRODUCT_ARCHITECTURE=""
   fi
 
-#  echo "curl --get --location --silent "${PRODUCT_CHECKSUM_URL}" | grep "${PRODUCT_CHECKSUM_PATTERN}" | cut -f 1 -d " ""
-
   # create temporary file for checksum data
   PRODUCT_CHECKSUM_FILE=$(mktemp)
 
@@ -47,7 +45,8 @@ function generate_cask() {
     "${PRODUCT_CHECKSUM_URL}"
 
   # "parse" checksum file and assign value
-  PRODUCT_CHECKSUM=$(cat ${PRODUCT_CHECKSUM_FILE} | grep ${PRODUCT_CHECKSUM_PATTERN} | cut -f 1 -d ' ')
+  # shellcheck disable=SC2086
+  PRODUCT_CHECKSUM=$(grep ${PRODUCT_CHECKSUM_PATTERN} < "${PRODUCT_CHECKSUM_FILE}" | cut -f 1 -d ' ')
 
   if [[ -z ${PRODUCT_CHECKSUM} ]]; then
     echo "unable to set CHECKSUM"
@@ -78,12 +77,12 @@ function verify_cask() {
 
  if [ -n "${DEBUG}" ]; then
    echo
-   echo "PRODUCT_NAME:    ${PRODUCT_NAME}"
-   echo "PRODUCT_VERSION: ${PRODUCT_VERSION}"
+   echo "PRODUCT_NAME:          ${PRODUCT_NAME}"
+   echo "PRODUCT_VERSION_CLEAN: ${PRODUCT_VERSION_CLEAN}"
  fi
 
  # fail if required argument is unset
- if [[ -z ${PRODUCT_NAME} || -z ${PRODUCT_VERSION} ]]; then
+ if [[ -z ${PRODUCT_NAME} || -z ${PRODUCT_VERSION_CLEAN} ]]; then
    echo "missing required argument"
    exit 1
  fi

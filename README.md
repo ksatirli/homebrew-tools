@@ -1,6 +1,6 @@
 # Homebrew Tools
 
-> 🔧 Tools for building and maintaing Homebrew Taps
+> Tools for building and maintaing Homebrew Taps
 
 ## Table of Contents
 
