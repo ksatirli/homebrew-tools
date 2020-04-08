@@ -74,3 +74,36 @@ function generate_cask() {
     > "${GENERATED_CASKS_DIR}/${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}.rb"
 }
 
+function verify_cask() {
+
+ if [ -n "${DEBUG}" ]; then
+   echo
+   echo "PRODUCT_NAME:    ${PRODUCT_NAME}"
+   echo "PRODUCT_VERSION: ${PRODUCT_VERSION}"
+ fi
+
+ # fail if required argument is unset
+ if [[ -z ${PRODUCT_NAME} || -z ${PRODUCT_VERSION} ]]; then
+   echo "missing required argument"
+   exit 1
+ fi
+
+ # create Casks directory if it does not exist
+ mkdir -p "${UPSTREAM_CASKS_DIR}/"
+
+ # replace tapped (upstream) Cask with locally available version
+ rm -f "${UPSTREAM_CASKS_DIR}/${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}.rb"
+ cp "${GENERATED_CASKS_DIR}/${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}.rb" "${UPSTREAM_CASKS_DIR}/"
+
+ # install Cask
+ brew cask install --force "${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}"
+
+ # audit Cask
+ brew cask audit "${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}"
+
+ # check Cask style
+ brew cask style "${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}"
+
+ # uninstall Cask
+ brew cask uninstall --force "${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}"
+}
