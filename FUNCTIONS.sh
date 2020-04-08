@@ -4,8 +4,6 @@ set -e
 
 # shellcheck disable=SC1091
 . "./VERSIONS.sh"
-
-# shellcheck source=../homebrew-tools/CONFIG.sh
 . "../homebrew-tools/CONFIG.sh"
 
 function generate_cask() {
