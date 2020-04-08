@@ -5,8 +5,8 @@ set -e
 # shellcheck source=./helpers/VERSIONS.sh
 . "./VERSIONS.sh"
 
-# shellcheck source=../homebrew-helpers/CONFIG.sh
-. "../homebrew-helpers/CONFIG.sh"
+# shellcheck source=../homebrew-tools/CONFIG.sh
+. "../homebrew-tools/CONFIG.sh"
 
 function generate_cask() {
   if [ -n "${DEBUG}" ]; then
