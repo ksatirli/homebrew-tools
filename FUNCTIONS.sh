@@ -11,78 +11,85 @@ set -e
 function generate_cask() {
   if [ -n "${DEBUG}" ]; then
     echo
-    echo "PRODUCT_NAME:             ${PRODUCT_NAME}"
-    echo "PRODUCT_VERSION:          ${PRODUCT_VERSION}"
-    echo "PRODUCT_VERSION_CLEAN     ${PRODUCT_VERSION_CLEAN}"
-    echo "PRODUCT_BUILD:            ${PRODUCT_BUILD}"
-    echo "PRODUCT_ARCHITECTURE:     ${PRODUCT_ARCHITECTURE}"
-    echo "PRODUCT_FLAGS:            ${PRODUCT_FLAGS}"
-    echo "PRODUCT_PACKAGE_PATH:     ${PRODUCT_PACKAGE_PATH}"
-    echo "PRODUCT_CHECKSUM_URL:     ${PRODUCT_CHECKSUM_URL}"
-    echo "PRODUCT_CHECKSUM_PATTERN: ${PRODUCT_CHECKSUM_PATTERN}"
+    echo "BINARY:           ${BINARY}"
+    echo "VERSION:          ${VERSION}"
+    echo "VERSION_CLEAN     ${VERSION_CLEAN}"
+    echo "BUILD:            ${BUILD}"
+    echo "FLAGS:            ${FLAGS}"
+    echo "PACKAGE_PROTOCOL: ${PACKAGE_PROTOCOL}"
+    echo "PACKAGE_HOST:     ${PACKAGE_HOST}"
+    echo "PACKAGE_PATH:     ${PACKAGE_PATH}"
+    echo "CHECKSUM_URL:     ${CHECKSUM_URL}"
+    echo "CHECKSUM_PATTERN: ${CHECKSUM_PATTERN}"
+    echo "NAME:             ${NAME}"
+    echo "HOMEPAGE:         ${HOMEPAGE}"
   fi
 
   # fail if required argument is unset
-  if [[ -z ${PRODUCT_NAME} || -z ${PRODUCT_VERSION} || -z ${PRODUCT_CHECKSUM_URL} || -z ${PRODUCT_CHECKSUM_PATTERN} ]]; then
+  if [[ -z ${BINARY} || -z ${VERSION} || -z ${CHECKSUM_URL} || -z ${CHECKSUM_PATTERN} ]]; then
     echo "missing required argument"
     exit 1
   fi
 
-  # omit PRODUCT_ARCHITECTURE string if positional argument calls for it
-  if [[ -n ${PRODUCT_ARCHITECTURE} && ${PRODUCT_ARCHITECTURE} == "omit" ]]; then
-    PRODUCT_ARCHITECTURE=""
+  # omit ARCHITECTURE string if positional argument calls for it
+  if [[ -n ${ARCHITECTURE} && ${ARCHITECTURE} == "omit" ]]; then
+    ARCHITECTURE=""
   fi
 
   # create temporary file for checksum data
-  PRODUCT_CHECKSUM_FILE=$(mktemp)
+  CHECKSUM_FILE=$(mktemp)
 
   # fetch checksums file
   curl \
     --get \
     --location \
-    --output "${PRODUCT_CHECKSUM_FILE}" \
+    --output "${CHECKSUM_FILE}" \
     --silent \
-    "${PRODUCT_CHECKSUM_URL}"
+    "${CHECKSUM_URL}"
 
   # "parse" checksum file and assign value
   # shellcheck disable=SC2086
-  PRODUCT_CHECKSUM=$(grep ${PRODUCT_CHECKSUM_PATTERN} < "${PRODUCT_CHECKSUM_FILE}" | cut -f 1 -d ' ')
+  CHECKSUM=$(grep ${CHECKSUM_PATTERN} < "${CHECKSUM_FILE}" | cut -f 1 -d ' ')
 
-  if [[ -z ${PRODUCT_CHECKSUM} ]]; then
+  if [[ -z ${CHECKSUM} ]]; then
     echo "unable to set CHECKSUM"
     exit 1
   else
     if [ -n "${DEBUG}" ]; then
-    echo "PRODUCT_CHECKSUM_FILE:    ${PRODUCT_CHECKSUM_FILE}"
-    echo "PRODUCT_CHECKSUM:         ${PRODUCT_CHECKSUM}"
+    echo "CHECKSUM_FILE:    ${CHECKSUM_FILE}"
+    echo "CHECKSUM:         ${CHECKSUM}"
     fi
   fi
 
-  rm -f "${GENERATED_CASKS_DIR}/${PRODUCT_NAME}@${PRODUCT_VERSION}.rb"
+  rm -f "${GENERATED_CASKS_DIR}/${NAME}@${VERSION}.rb"
 
   # generate Cask file
   sed \
-    -e "s/%%PRODUCT_VERSION%%/${PRODUCT_VERSION}/g" \
-    -e "s/%%PRODUCT_VERSION_CLEAN%%/${PRODUCT_VERSION_CLEAN}/g" \
-    -e "s/%%PRODUCT_BUILD%%/${PRODUCT_BUILD}/g" \
-    -e "s/%%PRODUCT_ARCHITECTURE%%/${PRODUCT_ARCHITECTURE}/g" \
-    -e "s/%%PRODUCT_FLAGS%%/${PRODUCT_FLAGS}/g" \
-    -e "s/%%PRODUCT_PACKAGE_PATH%%/${PRODUCT_PACKAGE_PATH}/g" \
-    -e "s/%%PRODUCT_CHECKSUM%%/${PRODUCT_CHECKSUM}/g" \
-    "templates/${PRODUCT_NAME}.cask" \
-    > "${GENERATED_CASKS_DIR}/${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}.rb"
+    -e "s/%%BINARY%%/${BINARY}/g" \
+    -e "s/%%VERSION%%/${VERSION}/g" \
+    -e "s/%%VERSION_CLEAN%%/${VERSION_CLEAN}/g" \
+    -e "s/%%BUILD%%/${BUILD}/g" \
+    -e "s/%%FLAGS%%/${FLAGS}/g" \
+    -e "s/%%PACKAGE_PROTOCOL%%/${PACKAGE_PROTOCOL}/g" \
+    -e "s/%%PACKAGE_HOST%%/${PACKAGE_HOST}/g" \
+    -e "s/%%PACKAGE_PATH%%/${PACKAGE_PATH}/g" \
+    -e "s/%%CHECKSUM%%/${CHECKSUM}/g" \
+    -e "s/%%NAME%%/${NAME}/g" \
+    -e "s/%%HOMEPAGE%%/${HOMEPAGE}/g" \
+    "${CASK_FILE}" \
+    > "${GENERATED_CASKS_DIR}/${BINARY}@${VERSION_CLEAN}.rb"
 }
 
 function verify_cask() {
 
  if [ -n "${DEBUG}" ]; then
    echo
-   echo "PRODUCT_NAME:          ${PRODUCT_NAME}"
-   echo "PRODUCT_VERSION_CLEAN: ${PRODUCT_VERSION_CLEAN}"
+   echo "NAME:          ${NAME}"
+   echo "VERSION_CLEAN: ${VERSION_CLEAN}"
  fi
 
  # fail if required argument is unset
- if [[ -z ${PRODUCT_NAME} || -z ${PRODUCT_VERSION_CLEAN} ]]; then
+ if [[ -z ${NAME} || -z ${VERSION_CLEAN} ]]; then
    echo "missing required argument"
    exit 1
  fi
@@ -91,18 +98,18 @@ function verify_cask() {
  mkdir -p "${UPSTREAM_CASKS_DIR}/"
 
  # replace tapped (upstream) Cask with locally available version
- rm -f "${UPSTREAM_CASKS_DIR}/${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}.rb"
- cp "${GENERATED_CASKS_DIR}/${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}.rb" "${UPSTREAM_CASKS_DIR}/"
+ rm -f "${UPSTREAM_CASKS_DIR}/${NAME}@${VERSION_CLEAN}.rb"
+ cp "${GENERATED_CASKS_DIR}/${NAME}@${VERSION_CLEAN}.rb" "${UPSTREAM_CASKS_DIR}/"
 
  # install Cask
- brew cask install --force "${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}"
+ brew cask install --force "${NAME}@${VERSION_CLEAN}"
 
  # audit Cask
- brew cask audit "${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}"
+ brew cask audit "${NAME}@${VERSION_CLEAN}"
 
  # check Cask style
- brew cask style "${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}"
+ brew cask style "${NAME}@${VERSION_CLEAN}"
 
  # uninstall Cask
- brew cask uninstall --force "${PRODUCT_NAME}@${PRODUCT_VERSION_CLEAN}"
+ brew cask uninstall --force "${NAME}@${VERSION_CLEAN}"
 }
