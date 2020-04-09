@@ -9,6 +9,11 @@ set -e
 . "../homebrew-tools/CONFIG.sh"
 
 function generate_cask() {
+  if [ -z "${VERSION_CLEAN}" ];
+  then
+    VERSION_CLEAN="${VERSION}"
+  fi
+
   if [ -n "${DEBUG}" ]; then
     echo
     echo "BINARY:           ${BINARY}"
@@ -81,6 +86,10 @@ function generate_cask() {
 }
 
 function verify_cask() {
+  if [ -z "${VERSION_CLEAN}" ];
+  then
+    VERSION_CLEAN="${VERSION}"
+  fi
 
  if [ -n "${DEBUG}" ]; then
    echo
