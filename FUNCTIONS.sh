@@ -83,6 +83,9 @@ function generate_cask() {
     -e "s/%%HOMEPAGE%%/${HOMEPAGE}/g" \
     "${CASK_FILE}" \
     > "${GENERATED_CASKS_DIR}/${BINARY}@${VERSION_CLEAN}.rb"
+
+    # clean up
+    unset VERSION VERSION_CLEAN BUILD ARCHITECTURE FLAGS CHECKSUM_PATTERN
 }
 
 function verify_cask() {
@@ -121,4 +124,7 @@ function verify_cask() {
 
  # uninstall Cask
  brew cask uninstall --force "${NAME}@${VERSION_CLEAN}"
+
+ # clean up
+ unset VERSION VERSION_CLEAN
 }
